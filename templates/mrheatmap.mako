@@ -1,23 +1,50 @@
 
 <%
-    data = list( hda.datatype.dataprovider( hda, 'json',
+    canvas_width = 500
+    canvas_height = 500
+
+    from galaxy.util.bunch import Bunch
+    # hafta use temp vars because mako
+    settings = Bunch(
+        chrom1=chrom1,
         start1=start1,
+        stop1=stop1,
+        chrom2=chrom2,
         start2=start2,
-        window_size=window_size,
-        min_resolution=min_resolution,
-        max_resolution=max_resolution
-    ))
-    print dict(
-        start1=start1,
-        start2=start2,
-        window_size=window_size,
+        stop2=stop2,
         min_resolution=min_resolution,
         max_resolution=max_resolution
     )
+    print settings
+
+    available_chroms = list( hda.datatype.dataprovider( hda, 'json', chromosomes=True ) )[0]
+    print available_chroms
+
+    # rework defaults given metadata in file
+    if not settings.chrom1:
+        settings.chrom1 = available_chroms[ 'chromosomes' ][0]
+    if not settings.chrom2:
+        settings.chrom2 = available_chroms[ 'chromosomes' ][0]
+    print 'chroms:', settings.chrom1, settings.chrom2
+
+    header = list( hda.datatype.dataprovider( hda, 'json', header=True, **settings.__dict__ ) )[0]
+    print header
+
+    settings.start1 = settings.start1 or header[ 'start' ]
+    settings.start2 = settings.start2 or header[ 'start' ]
+    settings.stop1 = settings.stop1 or header[ 'stop' ]
+    settings.stop2 = settings.stop2 or header[ 'stop' ]
+
+    blurry_pixel_resolution = canvas_width / 5
+    focused_pixel_resolution = canvas_width
+
+    settings.min_resolution = settings.min_resolution or ( settings.stop1 - settings.start1 + 1 )
+    settings.max_resolution = settings.max_resolution or ( ( settings.min_resolution - 1 ) / focused_pixel_resolution )
+    print settings
+
+    data = list( hda.datatype.dataprovider( hda, 'json', **settings.__dict__ ) )
 
     dom_id = '-'.join([ visualization_name, query.get( 'dataset_id' ) ])
-    canvas_width = 500
-    canvas_height = 500
 %>
 
 ## ----------------------------------------------------------------------------
@@ -34,6 +61,7 @@
     )}
     <script type="text/javascript" src="/plugins/visualizations/mrheatmap/static/colors.js"></script>
     <script type="text/javascript" src="/plugins/visualizations/mrheatmap/static/pan-and-zoom.js"></script>
+    <script type="text/javascript" src="/plugins/visualizations/mrheatmap/static/composable.js"></script>
     <script type="text/javascript" src="/plugins/visualizations/mrheatmap/static/backbone-heatmap.js"></script>
 
     ${ h.css( 'base' ) }
@@ -79,31 +107,30 @@
         </div>
     </div>
     <script type="text/javascript">
-        var data = ${ h.dumps( data, indent=2 ) };
+        window.chroms = ${ h.dumps( available_chroms, indent=2 ) };
+        window.header = ${ h.dumps( header, indent=2 ) };
         window.view = new MRHStandaloneVisualization({
             el      : $( '#${ dom_id }' ),
             model   : new MRHConfig({
-                dataConfig : {
-                    source : {
-                        dataset_id      : "${ query.get( 'dataset_id' ) }",
+                dataConfig  : {
+                    source  : {
+                        chroms      : chroms,
+                        // each chrom has a header - use a map
+                        headers     : { '${ settings.chrom1 }' : header },
+                        dataset_id : "${ query.get( 'dataset_id' ) }",
                     },
-                    provider : {
-                        start1          : ${ start1 },
-                        start2          : ${ start2 },
-                        window_size     : ${ window_size },
-                        min_resolution  : ${ min_resolution },
-                        max_resolution  : ${ max_resolution },
-                        expected_min    : ${ expected_min },
-                        expected_max    : ${ expected_max },
-                    },
+                    provider : ${ h.dumps( settings.__dict__, indent=2 ) },
                 },
                 renderConfig : {
-                    canvasWidth     : ${ canvas_width },
-                    canvasHeight    : ${ canvas_height },
+                    canvasWidth  : ${ canvas_width },
+                    canvasHeight : ${ canvas_height },
                 }
             }),
         });
+
+        window.data = ${ h.dumps( data, indent=2 ) };
         view.render( data );
+
     </script>
 </body>
 </html>

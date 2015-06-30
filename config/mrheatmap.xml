@@ -11,15 +11,16 @@
     <params>
         <param type="dataset" var_name_in_template="hda" required="true">dataset_id</param>
 
+        <param default=''>chrom1</param>
         <param type="int" default="0">start1</param>
+        <param type="int" default="0">stop1</param>
+        <param default=''>chrom2</param>
         <param type="int" default="0">start2</param>
-        <param type="int" default="1000000">window_size</param>
-        <param type="int" default="1000001">min_resolution</param>
-        <param type="int" default="3907">max_resolution</param>
-        <param type="float" default="-10.0">expected_min</param>
-        <param type="float" default="10.0">expected_max</param>
+        <param type="int" default="0">stop2</param>
 
-        <param>region</param>
+        <param type="int">min_resolution</param>
+        <param type="int">max_resolution</param>
+
     </params>
     <template>mrheatmap.mako</template>
 </visualization>

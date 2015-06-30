@@ -1,8 +1,8 @@
 function panAndZoom( target, options ){
     options = jQuery.extend( {
-        dblclickZoom : 500
+        dblclickZoom : 5000
     }, options );
-    console.debug( options );
+    // console.debug( options );
 
     function getElementMouseCoords( event, element ){
         // console.debug( event.offsetX, event.offsetY );
@@ -37,12 +37,12 @@ function panAndZoom( target, options ){
 
         $( target )
             .mousedown( function( ev ){
-                console.debug( 'mousedown:', ev );
+                // console.debug( 'mousedown:', ev );
                 lastCoords = getElementMouseCoords( ev, this );
                 $( this ).on( 'mousemove', mouseMove );
             })
             .mouseup( function( ev ){
-                console.debug( 'mouseup:', ev );
+                // console.debug( 'mouseup:', ev );
                 $( this ).off( 'mousemove', mouseMove );
             });
     }
